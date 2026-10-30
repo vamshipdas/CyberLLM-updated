@@ -306,6 +306,30 @@ async def upload_log_file(
         f"({file_size} bytes, {len(parsed_events)} events, {len(findings)} findings)"
     )
 
+
+    # Trigger email alerts for HIGH/CRITICAL severity events from upload (up to 3 per upload)
+    try:
+        from app.services.notifier import notifier as _notifier
+        _alerted = 0
+        for _evt in parsed_events:
+            if _alerted >= 3:
+                break
+            _evt_sev = str(_evt.get("severity", "")).lower()
+            if _evt_sev in ("high", "critical"):
+                _alert_payload = {
+                    "id": _evt.get("id") or "EVT-upload-" + str(_alerted),
+                    "alert_type": "log",
+                    "title": "[" + _evt_sev.upper() + "] " + _evt.get("source", "System") + " Log Event " + str(_evt.get("event_id", "")),
+                    "severity": _evt_sev,
+                    "description": _evt.get("message", ""),
+                    "created_at": _evt.get("timestamp", ""),
+                    "threat_type": "log_anomaly",
+                }
+                _notifier.send_critical_alert_background(_alert_payload)
+                _alerted += 1
+    except Exception as _ne:
+        print("[WARN] Failed to trigger upload email alerts: " + str(_ne))
+
     # Compute breakdown stats
     levels_count: dict = {}
     severities_count: dict = {"LOW": 0, "MEDIUM": 0, "HIGH": 0, "CRITICAL": 0}

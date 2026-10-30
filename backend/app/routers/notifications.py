@@ -10,7 +10,8 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import require_admin, require_any_user
 from app.db import get_db
-from app.models.db_models import NotificationLog, Ticket, Finding as DBFinding, User
+from app.models.db_models import NotificationLog, Ticket, Finding as DBFinding, LogEvent, User
+from app.services.log_collector import log_collector
 from app.models.schemas import (
     NotificationLogOut,
     NotificationSettingsOut,
@@ -147,6 +148,33 @@ def resend_alert_notification(
     finding = db.query(DBFinding).filter(DBFinding.id == alert_id).first()
     if finding:
         res = notifier.send_critical_alert(finding, db=db, is_test=True)
+        return res
+
+    log_evt = db.query(LogEvent).filter(LogEvent.id == alert_id).first()
+    if not log_evt:
+        log_evt = db.query(LogEvent).filter(LogEvent.event_id == alert_id).first()
+    if log_evt:
+        res = notifier.send_critical_alert({
+            "id": log_evt.id,
+            "alert_type": "log",
+            "title": f"Log Event {log_evt.event_id or ''}: {log_evt.source}".strip(),
+            "severity": log_evt.severity,
+            "description": log_evt.message,
+            "threat_type": "log_anomaly",
+        }, db=db, is_test=True)
+        return res
+
+    # Also check in-memory live buffer
+    match = next((e for e in log_collector.buffer if e.get("id") == alert_id or str(e.get("event_id")) == alert_id), None)
+    if match:
+        res = notifier.send_critical_alert({
+            "id": match.get("id", alert_id),
+            "alert_type": "log",
+            "title": f"Log Event {match.get('event_id') or ''}: {match.get('source')}".strip(),
+            "severity": match.get("severity", "high"),
+            "description": match.get("message", ""),
+            "threat_type": "log_anomaly",
+        }, db=db, is_test=True)
         return res
 
     raise HTTPException(status_code=404, detail=f"Alert with ID '{alert_id}' not found.")

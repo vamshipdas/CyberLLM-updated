@@ -168,6 +168,23 @@ class LogCollector:
                 except Exception:
                     pass
 
+                # Trigger email alert for HIGH/CRITICAL live log events
+                if normalized.get("severity", "").lower() in ("high", "critical"):
+                    try:
+                        from app.services.notifier import notifier
+                        alert_payload = {
+                            "id": normalized["id"],
+                            "alert_type": "log",
+                            "title": f"Live Log Alert: {normalized.get('source', 'System')} [{normalized.get('event_id', '')}]",
+                            "severity": normalized["severity"],
+                            "description": normalized.get("message", ""),
+                            "created_at": normalized.get("timestamp", ""),
+                            "threat_type": "log_anomaly",
+                        }
+                        notifier.send_critical_alert_background(alert_payload)
+                    except Exception as _ne:
+                        pass  # never block the log stream
+
                 # Emit normalized log entry with severity
                 yield f"data: {json.dumps({'type': 'log', 'data': normalized})}\n\n"
 

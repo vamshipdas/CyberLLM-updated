@@ -891,7 +891,15 @@ class AlertNotifier:
         if isinstance(item, dict):
             alert_id = item.get("id") or item.get("ticket_id") or item.get("finding_id")
             if alert_id:
-                a_type = "ticket" if str(alert_id).startswith("TKT-") else ("finding" if str(alert_id).startswith("FND-") else "ticket")
+                a_id = str(alert_id)
+                if a_id.startswith("TKT-"):
+                    a_type = "ticket"
+                elif a_id.startswith("FND-"):
+                    a_type = "finding"
+                elif a_id.startswith("EVT-") or item.get("alert_type") in ("log", "event"):
+                    a_type = "log"
+                else:
+                    a_type = item.get("alert_type") or "ticket"
                 try:
                     return alert_context_builder.build_summary(a_type, alert_id, mode="simple", db=db)
                 except Exception as e:

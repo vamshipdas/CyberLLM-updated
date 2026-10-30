@@ -21,6 +21,7 @@ import {
   CheckSquare
 } from 'lucide-react';
 import { getAlertSummary, updateAlertStatus, createTicketFromFinding } from '../../api';
+import AlertEmailIndicator from '../AlertEmailIndicator';
 
 const SEVERITY_COLORS = {
   CRITICAL: '#fb7185',
@@ -205,6 +206,11 @@ Why it matters: ${summary.why_it_matters}`;
                 <option value="resolved">Resolved</option>
               </select>
             </div>
+
+            <AlertEmailIndicator
+              alertId={alertData?.id}
+              severity={summary?.severity || alertData?.severity}
+            />
 
             {summary?.origin?.country && summary.origin.country !== 'Unknown' && (
               <button

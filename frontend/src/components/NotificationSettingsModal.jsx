@@ -22,7 +22,7 @@ import {
 export default function NotificationSettingsModal({ isOpen, onClose, user, showToast }) {
   const [settings, setSettings] = useState({
     enabled: true,
-    min_severity: 'critical',
+    min_severity: 'high',
     recipients: ['dasvamshi8@gmail.com'],
     cooldown_seconds: 300,
     smtp_configured: false,

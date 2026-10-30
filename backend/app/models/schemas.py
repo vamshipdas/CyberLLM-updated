@@ -99,7 +99,7 @@ class TicketStatusUpdate(BaseModel):
 class TicketCreate(BaseModel):
     title: str
     threat_type: str = "general"
-    severity: str = "medium"
+    severity: str = "high"
     status: Optional[str] = "open"
     source_ip: Optional[str] = None
     target_host: Optional[str] = None

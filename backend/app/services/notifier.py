@@ -334,7 +334,7 @@ class AlertNotifier:
             # Fallback to config settings
             return {
                 "enabled": settings.ALERT_EMAIL_ENABLED,
-                "min_severity": (settings.ALERT_MIN_SEVERITY or "critical").lower(),
+                "min_severity": (settings.ALERT_MIN_SEVERITY or "high").lower(),
                 "recipients": self._parse_recipients(settings.ALERT_EMAIL_TO),
                 "cooldown_seconds": settings.ALERT_COOLDOWN_SECONDS,
                 "smtp_configured": bool(settings.SMTP_PASSWORD and settings.SMTP_PASSWORD.strip()),
@@ -947,7 +947,7 @@ class AlertNotifier:
         """Checks if alert severity satisfies the minimum threshold."""
         levels = {"low": 1, "medium": 2, "high": 3, "critical": 4}
         alert_val = levels.get(str(alert_severity).lower().strip(), 0)
-        min_val = levels.get(str(min_severity).lower().strip(), 4)
+        min_val = levels.get(str(min_severity).lower().strip(), 3)
         return alert_val >= min_val
 
 

@@ -6,10 +6,10 @@ export default function AlertEmailIndicator({ alertId, severity, showToast }) {
   const [status, setStatus] = useState(null); // 'sent' | 'failed' | 'skipped' | 'none'
   const [isResending, setIsResending] = useState(false);
 
-  const isCritical = String(severity || '').toLowerCase() === 'critical';
+  const isEligible = ['critical', 'high'].includes(String(severity || '').toLowerCase());
 
   useEffect(() => {
-    if (!isCritical || !alertId) return;
+    if (!isEligible || !alertId) return;
 
     let isCancelled = false;
     getAlertNotificationStatus(alertId)
@@ -25,9 +25,9 @@ export default function AlertEmailIndicator({ alertId, severity, showToast }) {
     return () => {
       isCancelled = true;
     };
-  }, [alertId, isCritical]);
+  }, [alertId, isEligible]);
 
-  if (!isCritical) return null;
+  if (!isEligible) return null;
 
   const handleResend = async (e) => {
     e.stopPropagation();

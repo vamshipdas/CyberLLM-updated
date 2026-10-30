@@ -81,7 +81,7 @@ def create_ticket(
     db.refresh(ticket)
 
     # Trigger critical notification if severity is critical
-    if ticket.severity.lower() == "critical":
+    if ticket.severity.lower() in ("critical", "high"):
         notifier.send_critical_alert_background(ticket)
 
     return ticket
@@ -118,7 +118,7 @@ def update_ticket_severity(
     db.refresh(ticket)
 
     # Trigger if updated to critical from non-critical
-    if new_severity == "critical" and old_severity != "critical":
+    if new_severity in ("critical", "high") and old_severity not in ("critical", "high"):
         notifier.send_critical_alert_background(ticket)
 
     return ticket

@@ -96,7 +96,7 @@ _HTML_TEMPLATE = """
         <div class="alert-meta">
           <strong>Alert ID:</strong> {{ alert_id }} &nbsp;|&nbsp;
           <strong>Timestamp:</strong> {{ timestamp }} &nbsp;|&nbsp;
-          <strong>Severity:</strong> <span class="badge badge-critical">CRITICAL</span>
+          <strong>Severity:</strong> <span class="badge badge-critical">{{ severity | upper }}</span>
           {% if grouped_count > 1 %}
           &nbsp;|&nbsp; <span class="badge" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid #a855f7;">{{ grouped_count }} ALERTS GROUPED</span>
           {% endif %}
@@ -511,16 +511,18 @@ class AlertNotifier:
         host_or_ip = target_host if target_host and target_host != "unknown" else source_ip
 
         # Prevent CRLF injection in subject
+        severity = alert_context.get("severity") or "critical"
         clean_title = _sanitize_header_value(alert_title)
         clean_host_ip = _sanitize_header_value(host_or_ip)
         
+        sev_tag = severity.upper() if severity else "CRITICAL"
         if is_test:
-            subject_str = f"[TEST ALERT] {clean_title} | {clean_host_ip} | Sentinel Desk"
+            subject_str = f"[TEST ALERT] [{sev_tag}] {clean_title} | {clean_host_ip} | Sentinel Desk"
         else:
             if grouped_count > 1:
-                subject_str = f"[CRITICAL] {grouped_count} critical alerts from {clean_host_ip} | Sentinel Desk"
+                subject_str = f"[{sev_tag}] {grouped_count} {severity} alerts from {clean_host_ip} | Sentinel Desk"
             else:
-                subject_str = f"[CRITICAL] {clean_title} | {clean_host_ip} | Sentinel Desk"
+                subject_str = f"[{sev_tag}] {clean_title} | {clean_host_ip} | Sentinel Desk"
 
         clean_subject = _sanitize_header_value(subject_str)
 
@@ -549,6 +551,7 @@ class AlertNotifier:
             "subject": clean_subject,
             "alert_id": alert_id,
             "alert_title": clean_title,
+            "severity": severity,
             "timestamp": alert_context.get("created_at") or datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
             "what_happened": what_happened,
             "why_it_matters": why_it_matters,

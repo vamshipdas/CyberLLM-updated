@@ -506,7 +506,7 @@ def create_ticket_from_finding(
 
     db.commit()
 
-    if severity.lower() == "critical":
+    if severity.lower() in ("critical", "high"):
         try:
             from app.services.notifier import notifier
             notifier.send_critical_alert_background(ticket)

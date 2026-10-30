@@ -70,6 +70,28 @@ def clean_notifier():
 # 1. Trigger & Severity Filtering Tests
 # -----------------------------------------------------------------------------
 
+
+def test_high_alert_triggers_email_when_threshold_is_high(clean_notifier):
+    """Verify that a HIGH alert triggers SMTP delivery when min_severity is high."""
+    alert = {
+        "id": "TKT-HIGH-001",
+        "title": "Suspicious PowerShell Encoded Command",
+        "severity": "high",
+        "what_happened": "Obfuscated powershell execution detected on workstation.",
+        "why_it_matters": "Possible malware initial execution.",
+        "severity_reason": "Matches high severity suspicious process heuristic.",
+        "origin": {"ip": "10.0.4.15"},
+        "technical_details": {"target_host": "WS-09"},
+    }
+
+    with patch("smtplib.SMTP") as mock_smtp, patch.object(settings, "SMTP_PASSWORD", "mock-app-password"):
+        instance = MagicMock()
+        mock_smtp.return_value.__enter__.return_value = instance
+
+        res = clean_notifier.send_critical_alert(alert)
+        assert res["status"] == "sent"
+        assert instance.sendmail.called
+
 def test_critical_alert_triggers_email(clean_notifier):
     """Verify that a CRITICAL alert triggers SMTP delivery."""
     alert = {
@@ -98,8 +120,8 @@ def test_critical_alert_triggers_email(clean_notifier):
 
 
 def test_non_critical_alerts_do_not_send(clean_notifier):
-    """Verify low, medium, and high alerts send nothing when min_severity is critical."""
-    for sev in ["low", "medium", "high"]:
+    """Verify low and medium alerts send nothing when min_severity is high or critical."""
+    for sev in ["low", "medium"]:
         alert = {
             "id": f"TKT-TEST-{sev.upper()}",
             "title": f"Test {sev} alert",

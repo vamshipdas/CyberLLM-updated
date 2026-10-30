@@ -38,3 +38,4 @@ def trigger_alert():
 
 if __name__ == "__main__":
     trigger_alert()
+

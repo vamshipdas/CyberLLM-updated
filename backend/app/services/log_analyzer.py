@@ -361,7 +361,7 @@ class LogAnalyzer:
                 ticket_id = self._ensure_ticket(db, fnd)
                 fnd["ticket_id"] = ticket_id
 
-            if severity == "critical":
+            if severity in ["high", "critical"]:
                 try:
                     from app.services.notifier import notifier
                     notifier.send_critical_alert_background(fnd)

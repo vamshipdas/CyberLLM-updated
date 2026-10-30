@@ -945,11 +945,11 @@ class AlertNotifier:
 
     def _get_group_key(self, alert_dict: Dict[str, Any]) -> str:
         """Determines grouping key: source IP if present and valid; else category."""
-        ip = alert_dict.get("origin", {}).get("ip")
-        if ip and ip not in ("unknown", "127.0.0.1", ""):
-            return f"ip:{ip}"
-        category = alert_dict.get("threat_type") or alert_dict.get("category") or "general"
-        return f"cat:{category}"
+        raw_ip = str(alert_dict.get("origin", {}).get("ip") or "").strip()
+        if raw_ip and raw_ip.lower() not in ("unknown", "127.0.0.1", "none", "n/a", "internal", ""):
+            return f"ip:{raw_ip.lower()}"
+        source = alert_dict.get("title") or alert_dict.get("threat_type") or alert_dict.get("category") or "general"
+        return f"src:{str(source)[:30].strip().lower()}"
 
     def _is_severity_eligible(self, alert_severity: str, min_severity: str) -> bool:
         """Checks if alert severity satisfies the minimum threshold."""

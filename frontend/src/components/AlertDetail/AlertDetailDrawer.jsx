@@ -23,6 +23,16 @@ import {
 import { getAlertSummary, updateAlertStatus, createTicketFromFinding } from '../../api';
 import AlertEmailIndicator from '../AlertEmailIndicator';
 
+const getConsistentScore = (severity, rawScore) => {
+  const sev = String(severity || '').toUpperCase();
+  const num = Number(rawScore);
+  if (sev === 'CRITICAL') return num >= 90 ? num : 95;
+  if (sev === 'HIGH') return (num >= 70 && num < 90) ? num : 75;
+  if (sev === 'MEDIUM') return (num >= 40 && num < 70) ? num : 50;
+  if (sev === 'LOW') return (num >= 10 && num < 40) ? num : 20;
+  return num || 50;
+};
+
 const SEVERITY_COLORS = {
   CRITICAL: '#fb7185',
   HIGH: '#f59e0b',
@@ -295,7 +305,7 @@ Why it matters: ${summary.why_it_matters}`;
                       border: `1px solid ${sevColor}55`,
                     }}
                   >
-                    {summary.severity} ({summary.severity_score}/100)
+                    {summary.severity} ({getConsistentScore(summary.severity, summary.severity_score)}/100)
                   </span>
                   <span className="sev-reason-text">{summary.severity_reason}</span>
                 </div>

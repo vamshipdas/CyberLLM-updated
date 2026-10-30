@@ -309,11 +309,33 @@ class AlertContextBuilder:
         severity_score = sev_res["score"]
         severity_reasons = sev_res["reasons"] or []
 
-        # If entity had an explicit non-low severity, maintain consistency
-        if orig_level in ("HIGH", "CRITICAL") and computed_severity not in ("HIGH", "CRITICAL"):
+        # Severity scoring matrix
+        _SEV_DEFAULT_SCORES = {
+            "LOW": 20,
+            "MEDIUM": 50,
+            "HIGH": 75,
+            "CRITICAL": 95,
+        }
+        _SEV_ORDER = {"LOW": 0, "MEDIUM": 1, "HIGH": 2, "CRITICAL": 3}
+
+        # If entity had an explicit severity higher than computed, escalate
+        if _SEV_ORDER.get(orig_level, 0) > _SEV_ORDER.get(computed_severity, 0):
             computed_severity = orig_level
+            severity_score = max(severity_score, _SEV_DEFAULT_SCORES.get(orig_level, 50))
             severity_reasons = [f"Classified as {computed_severity} based on organizational {threat_type} triage rule."] + severity_reasons
-        elif not severity_reasons:
+
+        # Guarantee severity_score strictly matches the assessed severity band
+        min_band_score = _SEV_DEFAULT_SCORES.get(computed_severity, 20)
+        if computed_severity == "CRITICAL" and severity_score < 90:
+            severity_score = 95
+        elif computed_severity == "HIGH" and (severity_score < 70 or severity_score >= 90):
+            severity_score = 75
+        elif computed_severity == "MEDIUM" and (severity_score < 40 or severity_score >= 70):
+            severity_score = 50
+        elif computed_severity == "LOW" and severity_score >= 40:
+            severity_score = 20
+
+        if not severity_reasons:
             severity_reasons = [f"Base severity calculated as {computed_severity} ({severity_score}/100) from telemetry patterns."]
 
         # -------------------------------------------------------------

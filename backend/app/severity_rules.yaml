@@ -2,6 +2,15 @@
 # Configurable mapping and pattern overrides for non-LLM deterministic severity classification
 
 base_levels:
+  low:
+    severity: "low"
+    score: 20
+  medium:
+    severity: "medium"
+    score: 50
+  high:
+    severity: "high"
+    score: 75
   debug:
     severity: "low"
     score: 10

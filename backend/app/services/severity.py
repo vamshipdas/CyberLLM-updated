@@ -90,10 +90,10 @@ class SeverityClassifier:
             if raw_level in ["critical", "fatal", "emerg", "emergency"]:
                 current_severity = "critical"
                 current_score = 95
-            elif raw_level in ["error", "err"]:
+            elif raw_level in ["high", "error", "err"]:
                 current_severity = "high"
                 current_score = 75
-            elif raw_level in ["warning", "warn"]:
+            elif raw_level in ["medium", "warning", "warn"]:
                 current_severity = "medium"
                 current_score = 50
             else:
